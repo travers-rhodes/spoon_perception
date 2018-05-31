@@ -83,7 +83,7 @@ class SpoonPerception:
             image = convertMsgImageCv(self.bridge, image_msg)
             histogram = getHSVHistogram(image, self.spoon_mask)
             d = cv2.compareHist(self.spoon_histogram['H'], histogram['H'],
-                                cv2.HISTCMP_CORREL)
+                                cv2.cv.CV_COMP_CORREL)
             distances.append(d)
 
         if (np.mean(distances) < 0.5) and (np.mean(distances) > -0.5):
