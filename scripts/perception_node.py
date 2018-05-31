@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 
 import rospy
+import rospkg
 import cv2
 import numpy as np
 import yaml
+import datetime
+import errno
+import os
 
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
@@ -31,7 +35,11 @@ class SpoonPerception:
     related with the spoon
     """
 
-    def __init__(self,image_topic_name,th_detection=0.5,number_frames=5):
+    def __init__(self,image_topic_name,th_detection=0.5,number_frames=5,
+                 record=False, record_dir=None):
+        """
+
+        """
         self.last_image = None
         self.image_topic = None
         self.image_topic_name = image_topic_name
@@ -42,12 +50,21 @@ class SpoonPerception:
         self.crop_image_pub = rospy.Publisher('/spoon_perception/masked_image',Image, queue_size=10)
         self.detect_object_srv = None
 
+        self.record = record
+        self.record_frame = 0
+        self.record_dir = record_dir
+
         self.th_detection = th_detection # bellow this th we say that there is a object
         self.number_frames = number_frames # number of frames that it takes to make the decision
         return
 
     def startRetreivingImages(self):
         self.image_topic = rospy.Subscriber(self.image_topic_name, Image, self.receiveImage)
+
+        return
+
+    def startDummyDetectObjectSrv(self):
+        self.detect_object_srv = rospy.Service('detect_object_spoon', ObjectSpoon, self.dummyDetectObject)
 
         return
 
@@ -62,15 +79,29 @@ class SpoonPerception:
 
         for i in range(self.number_frames):
             image_msg = rospy.wait_for_message(self.image_topic_name, Image,
-                                           timeout=None)
+                                          timeout=None)
             image = convertMsgImageCv(self.bridge, image_msg)
             histogram = getHSVHistogram(image, self.spoon_mask)
             d = cv2.compareHist(self.spoon_histogram['H'], histogram['H'],
-                                cv2.cv.CV_COMP_CORREL)
+                                cv2.HISTCMP_CORREL)
             distances.append(d)
 
         if (np.mean(distances) < 0.5) and (np.mean(distances) > -0.5):
             response = True
+
+        if self.record and response:
+            self.saveMaskImage(image_msg)
+
+        return ObjectSpoonResponse(response)
+
+    def dummyDetectObject(self, req):
+
+        image_msg = rospy.wait_for_message(self.image_topic_name, Image,
+                                          timeout=None)
+
+        self.saveMaskImage(image_msg)
+
+        response = True
 
         return ObjectSpoonResponse(response)
 
@@ -129,7 +160,7 @@ class SpoonPerception:
         rospy.logwarn('Remove the  white sheet of paper from the background'
                                 '--- Press ENTER to accept the image'
                                 '--- Press ANY key to reject')
-        while( not displayWait(image, 'Calibration Without White') ):
+        while( not displayWait(image, 'Calibration') ):
             image_msg = rospy.wait_for_message(self.image_topic_name, Image,
                                            timeout=None)
             image = convertMsgImageCv(self.bridge, image_msg)
@@ -152,6 +183,19 @@ class SpoonPerception:
         self.calibrated = True
         return
 
+    def saveMaskImage(self,image_msg):
+
+        image = convertMsgImageCv(self.bridge, image_msg)
+        image = cv2.bitwise_and(image, image, mask=self.spoon_mask)
+
+        image_dir = self.record_dir + 'image_'  + str(self.record_frame) + '.png'
+        print(image_dir)
+        cv2.imwrite(image_dir, image)
+
+        self.record_frame = self.record_frame+1
+
+        return
+
 def displayWait(image,window_name='default'):
     """Function that displays a image and wait until key pressed
         if key pressed is enter it returns true otherwise false
@@ -160,13 +204,11 @@ def displayWait(image,window_name='default'):
 
     cv2.imshow(window_name,image)
     k = cv2.waitKey(0)
-    rospy.logwarn("you pressed %s"%k)
+    rospy.logwarn("you pressed key %s"% k)
     if k == 13 or k == 10: #enter key code
         image_accepted = True
 
-    cv2.destroyWindow(window_name)
     cv2.destroyAllWindows()
-    rospy.logwarn("Called to destroy all windows")
     return image_accepted
 
 
@@ -238,11 +280,25 @@ def histogramHSVPlot(histogram):
 
     return
 
+def createTimeDataDir(source_path):
+
+    time_str = datetime.datetime.now().strftime('%d_%m_%y__%H_%M_%S')
+    total_path = source_path + time_str
+    try:
+        os.makedirs(total_path)
+    except OSerror as e:
+        raise
+
+    return total_path + '/'
+
 def main():
+
+    rospack = rospkg.RosPack()
+    created_path = createTimeDataDir(rospack.get_path("ada_tutorial") +'/spoon_data/')
 
     rospy.init_node('spoon_perception',anonymous = True)
 
-    inteligent_spoon = SpoonPerception('/camera/image_raw')
+    inteligent_spoon = SpoonPerception('/camera/image_raw',record=True,record_dir=created_path)
     inteligent_spoon.startRetreivingImages()
 
     try:
