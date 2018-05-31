@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+import rospkg
 import cv2
 import numpy as np
 import yaml
@@ -203,7 +204,8 @@ def displayWait(image,window_name='default'):
 
     cv2.imshow(window_name,image)
     k = cv2.waitKey(0)
-    if k == 13: #enter key code
+    rospy.logwarn("you pressed key %s"% k)
+    if k == 13 or k == 10: #enter key code
         image_accepted = True
 
     cv2.destroyAllWindows()
@@ -291,7 +293,8 @@ def createTimeDataDir(source_path):
 
 def main():
 
-    created_path = createTimeDataDir('spoon_data/')
+    rospack = rospkg.RosPack()
+    created_path = createTimeDataDir(rospack.get_path("ada_tutorial") +'/spoon_data/')
 
     rospy.init_node('spoon_perception',anonymous = True)
 
