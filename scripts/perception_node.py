@@ -130,7 +130,7 @@ class SpoonPerception:
 
         return
 
-    def calibrationSpoon(self):
+    def calibrateSpoon(self):
         """this function gets an image and retreive the histogram and mask for the spoon
         """
         # get the white sheet image for mask calibration
@@ -294,19 +294,19 @@ def createTimeDataDir(source_path):
 def main():
 
     rospack = rospkg.RosPack()
-    created_path = createTimeDataDir(rospack.get_path("ada_tutorial") +'/spoon_data/')
+    #created_path = createTimeDataDir(rospack.get_path("ada_tutorial") +'/spoon_data/')
 
     rospy.init_node('spoon_perception',anonymous = True)
 
-    inteligent_spoon = SpoonPerception('/camera/image_raw',record=True,record_dir=created_path)
+    inteligent_spoon = SpoonPerception('/camera/image_raw')#,record=False,record_dir=created_path)
     inteligent_spoon.startRetreivingImages()
 
     try:
-        inteligent_spoon.calibrationSpoon()
+        inteligent_spoon.calibrateSpoon()
         inteligent_spoon.startDetectObjectSrv()
         rospy.spin()
     except KeyboardInterrupt:
-        print('Shutting Donw')
+        print('Shutting Down spoon perception')
 
     cv2.destroyAllWindows()
     plt.close()
