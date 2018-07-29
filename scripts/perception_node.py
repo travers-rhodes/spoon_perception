@@ -79,7 +79,10 @@ class SpoonPerception:
                                 cv2.cv.CV_COMP_CORREL)
             distances.append(d)
 
-        image_dir = self.saveMaskImage(image_msg)
+        if (self.record):
+          image_dir = self.saveMaskedImage(image_msg)
+        else:
+          image_dir = ""
 
         return ObjectSpoonResponse(np.mean(distances), image_dir)
 
@@ -161,7 +164,7 @@ class SpoonPerception:
         self.calibrated = True
         return
 
-    def saveMaskImage(self,image_msg):
+    def saveMaskedImage(self,image_msg):
 
         image = convertMsgImageCv(self.bridge, image_msg)
         image = cv2.bitwise_and(image, image, mask=self.spoon_mask)
