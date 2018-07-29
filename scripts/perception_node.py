@@ -274,7 +274,7 @@ def createTimeDataDir(source_path):
 
 def main():
 
-    rospack = rospkg.RosPack()
+    #rospack = rospkg.RosPack()
     #created_path = createTimeDataDir(rospack.get_path("ada_tutorial") +'/spoon_data/')
 
     rospy.init_node('spoon_perception',anonymous = True)
