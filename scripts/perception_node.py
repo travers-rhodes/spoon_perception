@@ -12,7 +12,7 @@ import os
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Float64
-from spoon_perception.srv import *
+from spoon_perception.srv import ObjectSpoon, ObjectSpoonResponse
 
 from matplotlib import pyplot as plt
 
@@ -63,11 +63,6 @@ class SpoonPerception:
 
         return
 
-    def startDummyDetectObjectSrv(self):
-        self.detect_object_srv = rospy.Service('detect_object_spoon', ObjectSpoon, self.dummyDetectObject)
-
-        return
-
     def startDetectObjectSrv(self):
         self.detect_object_srv = rospy.Service('detect_object_spoon',ObjectSpoon,self.detectObject)
 
@@ -75,8 +70,6 @@ class SpoonPerception:
 
     def detectObject(self,req):
         distances = []
-        response = False
-
         for i in range(self.number_frames):
             image_msg = rospy.wait_for_message(self.image_topic_name, Image,
                                           timeout=None)
@@ -86,24 +79,9 @@ class SpoonPerception:
                                 cv2.cv.CV_COMP_CORREL)
             distances.append(d)
 
-        if (np.mean(distances) < 0.5) and (np.mean(distances) > -0.5):
-            response = True
+        image_dir = self.saveMaskImage(image_msg)
 
-        if self.record and response:
-            self.saveMaskImage(image_msg)
-
-        return ObjectSpoonResponse(response)
-
-    def dummyDetectObject(self, req):
-
-        image_msg = rospy.wait_for_message(self.image_topic_name, Image,
-                                          timeout=None)
-
-        self.saveMaskImage(image_msg)
-
-        response = True
-
-        return ObjectSpoonResponse(response)
+        return ObjectSpoonResponse(np.mean(distances), image_dir)
 
     def receiveImage(self,data):
         """ this method is the calback to the topic of the image, it converts
@@ -194,7 +172,7 @@ class SpoonPerception:
 
         self.record_frame = self.record_frame+1
 
-        return
+        return image_dir
 
 def displayWait(image,window_name='default'):
     """Function that displays a image and wait until key pressed
@@ -306,7 +284,7 @@ def main():
         inteligent_spoon.startDetectObjectSrv()
         rospy.spin()
     except KeyboardInterrupt:
-        print('Shutting Down spoon perception')
+        print('Shutting Down spoon_perception.py')
 
     cv2.destroyAllWindows()
     plt.close()
