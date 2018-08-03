@@ -1,4 +1,4 @@
 <launch>
   <include file="$(find spoon_perception)/launch/custom_ueye_bgr.launch"/>
-  <node name="spoon_service" pkg="spoon_perception" type="perception_node.py"/>
+  <node name="detect_object_service" pkg="spoon_perception" type="spoon_object_detector.py"/>
 </launch>
