@@ -112,22 +112,22 @@ class SpoonPerception:
         return
 
     def calibrateSpoon(self):
-        """this function gets an image and retreive the histogram and mask for the spoon
+        """this function gets an image and retrieve the histogram and mask for the spoon
         """
         # get the white sheet image for mask calibration
         image_msg = rospy.wait_for_message(self.image_topic_name, Image,
                                            timeout=None)
         image = convertMsgImageCv(self.bridge, image_msg)
-        mask, th = retreiveMask(image)
+        mask, th = retrieveMask(image)
         rospy.logwarn('Put a white sheet of paper in the background'
                                 '--- Press ENTER to accept the image'
                                 '--- Press ANY key to reject')
-        # wait until accepted the image to retreive the mask
+        # wait until accepted the image to retrieve the mask
         while( not displayWait(mask,'Calibration') ):
             image_msg = rospy.wait_for_message(self.image_topic_name, Image,
                                            timeout=None)
             image = convertMsgImageCv(self.bridge, image_msg)
-            mask, th = retreiveMask(image)
+            mask, th = retrieveMask(image)
             rospy.logwarn('Put a white sheet of paper in the background'
                                 '--- Press ENTER to accept the image'
                                 '--- Press ANY key to reject')
@@ -204,7 +204,7 @@ def convertMsgImageCv(bridge, ros_image_msg):
 
     return cv_image
 
-def retreiveMask(image, intensity_th=0):
+def retrieveMask(image, intensity_th=0):
     """
     function return the image mask based on the threshold, the image
     should be in bgr8. Based in OTSU's method, returns the
