@@ -22,6 +22,7 @@ class SpoonCameraInterface:
     self.background_image_pub = rospy.Publisher('/spoon_perception/background_image',Image, queue_size=10)
   
     self.spoon_mask = self.createSpoonMask()
+    self.background_mask = 255 - self.spoon_mask # grayscale goes from 0 to 255 
     self.startRepublishingCroppedImages()
     return
   
@@ -50,7 +51,7 @@ class SpoonCameraInterface:
     if self.spoon_mask is not None:
         image = cv2.bitwise_and(self.last_image,self.last_image,mask=self.spoon_mask)
         self.spoon_image_pub.publish(self.bridge.cv2_to_imgmsg(image,'bgr8'))
-        image = cv2.bitwise_and(self.last_image,self.last_image,mask=(255 - self.spoon_mask))
+        image = cv2.bitwise_and(self.last_image,self.last_image,mask=self.background_mask)
         self.background_image_pub.publish(self.bridge.cv2_to_imgmsg(image,'bgr8'))
     return
 

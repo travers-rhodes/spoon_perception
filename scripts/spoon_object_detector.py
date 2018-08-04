@@ -3,8 +3,8 @@ import rospy
 import cv2
 import numpy as np
 
-import spoon_camera_interface as sci
-import histogram_utilities as hu
+import spoon_perception.spoon_camera_interface as sci
+import spoon_perception.histogram_utilities as hu
 
 from spoon_perception.srv import ObjectSpoon, ObjectSpoonResponse
 
