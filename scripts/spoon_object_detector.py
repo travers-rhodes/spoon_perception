@@ -31,14 +31,16 @@ class SpoonObjectDetector:
   def startDetectObjectSrv(self):
     self.detect_object_srv = rospy.Service('detect_object_spoon',ObjectSpoon,self.detectObject)
     return
-  
+
   def detectObject(self,req):
     distances = []
     for i in range(self.number_frames):
-        image = self.spoon_camera.getImage() 
+        image = self.spoon_camera.getImage()
         histogram = hu.getHSVHistogram(image, self.spoon_camera.spoon_mask)
         d = cv2.compareHist(self.spoon_histogram['H'], histogram['H'],
-                            cv2.cv.CV_COMP_CORREL)
+            # the module cv in cv2 disappeared in later version of OpenCV
+            #                cv2.cv.CV_COMP_CORREL)
+            cv2.HISTCMP_CORREL)
         distances.append(d)
 
     image_dir = ""
@@ -59,7 +61,7 @@ class SpoonObjectDetector:
       rospy.logwarn('Remove the  white sheet of paper from the background'
                             '--- Press ENTER to accept the image'
                             '--- Press ANY key to reject')
-    
+
     histogram = hu.getHSVHistogram(image, self.spoon_camera.spoon_mask)
 
     return histogram
