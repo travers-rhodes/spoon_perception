@@ -13,7 +13,7 @@ class SpoonObjectDetector:
   """class that detects an object on the spoon
   """
 
-  def __init__(self, spoon_camera, number_frames=5):
+  def __init__(self, spoon_camera, color_channel="H", number_frames=5):
     """
 
     """
@@ -24,6 +24,7 @@ class SpoonObjectDetector:
     self.detect_object_srv = None
 
     self.number_frames = number_frames # number of frames that it takes to make the decision
+    self.color_channel = color_channel
 
     self.spoon_histogram = self.getEmptySpoonHistogram()
     return
@@ -37,7 +38,7 @@ class SpoonObjectDetector:
     for i in range(self.number_frames):
         image = self.spoon_camera.getImage()
         histogram = hu.getHSVHistogram(image, self.spoon_camera.spoon_mask)
-        d = cv2.compareHist(self.spoon_histogram['H'], histogram['H'],
+        d = cv2.compareHist(self.spoon_histogram[self.color_channel], histogram[self.color_channel],
             # the module cv in cv2 disappeared in later version of OpenCV
             #                cv2.cv.CV_COMP_CORREL)
             cv2.HISTCMP_CORREL)
@@ -85,7 +86,8 @@ if __name__ == '__main__':
   rospy.init_node('spoon_object_detector',anonymous = True)
 
   spoon_camera = sci.SpoonCameraInterface('/camera/image_raw')
-  object_detector = SpoonObjectDetector(spoon_camera)
+  col_channel = rospy.get_param('~col_channel')
+  object_detector = SpoonObjectDetector(spoon_camera, color_channel=col_channel)
 
   object_detector.startDetectObjectSrv()
   rospy.spin()
