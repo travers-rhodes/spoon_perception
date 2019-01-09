@@ -28,9 +28,12 @@ geometry_msgs::PointStamped RayProjectedOnXYPlane(tf::Vector3 &ray_camera_frame,
   return stamped_point;
 }
 
-PixelProjector::PixelProjector(sensor_msgs::CameraInfo camera_info, std::string camera_frame, std::string plane_frame) : camera_frame_(camera_frame), plane_frame_(plane_frame), camera_info_(camera_info)
+PixelProjector::PixelProjector(const sensor_msgs::CameraInfo &camera_info, std::string camera_frame, std::string plane_frame) : camera_frame_(camera_frame), plane_frame_(plane_frame), camera_info_(camera_info)
 {
   cam_model_.fromCameraInfo(camera_info_);
+  // wait for the tf to load up 
+  ros::Duration timeout(1.0);
+  tf_listener_.waitForTransform(plane_frame_, camera_frame_, ros::Time(0), timeout);
 }
 
 geometry_msgs::PointStamped PixelProjector::PixelProjectedOnXYPlane(const cv::Point2d & uv_rect, const ros::Time acquisition_time)

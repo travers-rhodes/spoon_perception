@@ -17,6 +17,6 @@ class PixelProjector
     sensor_msgs::CameraInfo camera_info_;
 
   public:
-    PixelProjector(sensor_msgs::CameraInfo camera_info, std::string camera_frame, std::string plane_frame);
+    PixelProjector(const sensor_msgs::CameraInfo &camera_info, std::string camera_frame, std::string plane_frame);
     geometry_msgs::PointStamped PixelProjectedOnXYPlane(const cv::Point2d & uv_rect, const ros::Time acquisition_time);
 };
