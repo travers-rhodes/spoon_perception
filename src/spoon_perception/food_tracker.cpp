@@ -1,11 +1,5 @@
 #include "spoon_perception/food_tracker.h"
 
-cv::Point2d mock_get_food_pixel_center(const cv::Mat &image)
-{
-  cv::Point2d pixel(400,400);
-  return pixel;
-}
-
 FoodTracker::FoodTracker(std::string image_topic, std::string plane_frame) : it_(nh_), plane_frame_(plane_frame)
 {  
   ROS_WARN("[food_tracker] subscribing to camera");
@@ -29,6 +23,13 @@ void FoodTracker::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     std::shared_ptr<PixelProjector> pix_proj(new PixelProjector(*info_msg, camera_frame_, plane_frame_)); 
     pix_proj_ = pix_proj;
   }
+  
+  if (!pix_identifier_)
+  {
+    ROS_WARN("[food_tracker] Initializing pixel identifier");
+    std::shared_ptr<FoodPixelIdentifier> pix_identifier(new FoodPixelIdentifier());
+    pix_identifier_ = pix_identifier;
+  }
 
   // give some time for the newly initialized tf listener to hear the tf transform
   if (!active_)
@@ -47,7 +48,7 @@ void FoodTracker::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     ROS_ERROR("[food_tracker] Failed to convert image");
     return;
   }
-  cv::Point2d food_pixel = mock_get_food_pixel_center(image);
+  cv::Point2d food_pixel = pix_identifier_->GetFoodPixelCenter(image);
 
  
   ROS_WARN("[food_tracker] Actually using tf");

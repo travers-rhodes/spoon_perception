@@ -132,6 +132,7 @@ include_directories(
 add_library(${PROJECT_NAME}
   src/${PROJECT_NAME}/project_pixel.cpp
   src/${PROJECT_NAME}/food_tracker.cpp
+  src/${PROJECT_NAME}/identify_food_pixel.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -206,7 +207,8 @@ target_link_libraries(publish_food_location
 #############
 
 # Add gtest based cpp test target and link libraries
-catkin_add_gtest(${PROJECT_NAME}-test test/utest.cpp)
+catkin_add_gtest(${PROJECT_NAME}-test test/utest.cpp
+   test/image_process_test.cpp)
 if(TARGET ${PROJECT_NAME}-test)
   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 endif()
