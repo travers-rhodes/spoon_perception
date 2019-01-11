@@ -48,7 +48,13 @@ void FoodTracker::imageCb(const sensor_msgs::ImageConstPtr& image_msg,
     ROS_ERROR("[food_tracker] Failed to convert image");
     return;
   }
-  cv::Point2d food_pixel = pix_identifier_->GetFoodPixelCenter(image);
+
+  cv::Point2d food_pixel;
+  if (!pix_identifier_->GetFoodPixelCenter(image, food_pixel))
+  {
+    ROS_WARN("[food_tracker] No tomato seen");
+    return;
+  }
 
  
   ROS_WARN("[food_tracker] Actually using tf");

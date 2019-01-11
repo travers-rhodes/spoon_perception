@@ -2,12 +2,15 @@
 #include <iostream>
 #include <ros/ros.h>
 
-cv::Point2d FoodPixelIdentifier::GetFoodPixelCenter(const cv::Mat &image)
+bool FoodPixelIdentifier::GetFoodPixelCenter(const cv::Mat &image, cv::Point2d &pixel)
 {
   //cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
   //cv::imshow( "Display window", image );     
   //cv::waitKey(0);
 
+  // minimum number of pixels in order to count as a tomato
+  int min_num_pixels = 1000;
+  
   // avoid the computational complexity of overly large images
   int scaled_size_x = 200, scaled_size_y = 200;
   int smaller_image_x, smaller_image_y;
@@ -28,22 +31,20 @@ cv::Point2d FoodPixelIdentifier::GetFoodPixelCenter(const cv::Mat &image)
     scaled_size_y = image.cols;
   }
 
-  std::cout << "GOT HERE";
-  
   cv::Mat tomato = cv::imread("/home/helvellyn/vision_chefbot_ws/src/spoon_perception/test/input_data/JustTomato.jpg", CV_LOAD_IMAGE_COLOR);
   cv::Mat noTomato = cv::imread("/home/helvellyn/vision_chefbot_ws/src/spoon_perception/test/input_data/NoTomato.jpg", CV_LOAD_IMAGE_COLOR);
-  std::cout << image.cols << "," << image.rows << " I guess\n";
-  std::cout << scaledImage.cols << "," << scaledImage.rows << " I guess\n";
-  std::cout << tomato.cols << "," << tomato.rows << " I guess\n";
-  std::cout << noTomato.cols << "," << noTomato.rows << " I guess\n";
+  //std::cout << image.cols << "," << image.rows << " I guess\n";
+  //std::cout << scaledImage.cols << "," << scaledImage.rows << " I guess\n";
+  //std::cout << tomato.cols << "," << tomato.rows << " I guess\n";
+  //std::cout << noTomato.cols << "," << noTomato.rows << " I guess\n";
 
   cv::Mat image_vec = scaledImage.reshape(3,scaled_size_x * scaled_size_y).reshape(1);
   cv::Mat tomato_vec = tomato.reshape(3,tomato.cols*tomato.rows).reshape(1);
   cv::Mat noTomato_vec = noTomato.reshape(3,noTomato.cols*noTomato.rows).reshape(1);
 
-  std::cout << image_vec.cols << "," << image_vec.rows << " I guess\n";
-  std::cout << tomato_vec.cols << "," << tomato_vec.rows << " I guess\n";
-  std::cout << noTomato_vec.cols << "," << noTomato_vec.rows << " I guess\n";
+  //std::cout << image_vec.cols << "," << image_vec.rows << " I guess\n";
+  //std::cout << tomato_vec.cols << "," << tomato_vec.rows << " I guess\n";
+  //std::cout << noTomato_vec.cols << "," << noTomato_vec.rows << " I guess\n";
 
   cv::Mat dist_tomato, dist_noTomato; 
   cv::batchDistance(image_vec, tomato_vec, dist_tomato, -1, cv::noArray());
@@ -69,12 +70,19 @@ cv::Point2d FoodPixelIdentifier::GetFoodPixelCenter(const cv::Mat &image)
   cv::Moments moments = cv::moments(binary_location_unscaled, true);
   int x_center = moments.m10/moments.m00;
   int y_center = moments.m01/moments.m00;
-  cv::Point2d pixel(x_center, y_center);
-  cv::circle(binary_location_unscaled,pixel,10,cv::Scalar( 0, 0, 255 ));
-  
+  std::cout << "x_center: " << x_center << "; y_center: " << y_center << "; count: " << moments.m00 << "\n";
 
-  cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
-  cv::imshow( "Display window", binary_location_unscaled);     
-  cv::waitKey(0);
-  return pixel;
+  if (moments.m00 < min_num_pixels)
+  {
+    // no tomato detected
+    return false;
+  }
+  
+  pixel.x = x_center;
+  pixel.y = y_center;
+  //cv::circle(binary_location_unscaled,pixel,10,cv::Scalar( 0, 0, 255 ));
+  //cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
+  //cv::imshow( "Display window", binary_location_unscaled);     
+  //cv::waitKey(0);
+  return true;
 }
